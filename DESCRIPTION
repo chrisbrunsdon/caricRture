@@ -1,0 +1,14 @@
+Package: caricRture
+Title: 'Sketchy' style maps with R
+Version: 0.9
+Authors@R: person("Chris", "Brunsdon", , "christopher.brunsdon@nuim.ie", role =
+    c("aut", "cre"))
+Description: Draws 'Sketchy' style maps in R - drawing styles appear
+    hand-drawn.  Also curvilinear drawing is possible.
+Depends:
+    R (>= 3.1.1),
+    dplyr,
+    rgeos,
+    sp
+License: GPL-3
+LazyData: true
