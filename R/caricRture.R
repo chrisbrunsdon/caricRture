@@ -366,31 +366,7 @@ Htext <- function(lbl,x,y=NULL,...)
     text(x,y,label=lbl,...,family='Bradley Hand Bold')
   }
 
-#' Convenience driver for PDFs with hand written font
-#' 
-#' 
-#' 
-#' Works like the \link[grDevices]{pdf} command,  but specifies a hand writing styled font 'Bradley Hand Bold'.
-#' 
-#' @usage Hpdf(file)
-#' file \%>\% Hpdf(...)
-#'
-#' @param file file name to write to
-#' @param ... other parameters passed on to the \link[grDevices]{pdf} function
-#'
-#' @return No value returned
-#' @export
-#' 
-#' @details You'll need to have the 'Bradley Hand Bold' font installed 
-#'
-#' @examples
-#' # Create a sketchy map and write to a pdf file
-#' data(RA) 
-#' 'test.pdf' %>% Hpdf(h=6,w=10)
-#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% make_canvas %>% sketch_it(col='lightgrey',lwd=0.5)
-#' RA.spdf %>% coordinates -> label_points
-#' RA.spdf$NUTS3NAME %>% Htext(label_points,col='darkred')
-#' dev.off()
+
 Hpdf <- function(...) pdf(...,family='Amatic')
 
 Hcompass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), overdraw=FALSE, ...) 
@@ -412,7 +388,7 @@ Hcompass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), ov
     xmult + x
   txtypoints <- sin(point.angles[c(1, 3, 5, 7)]) * 1.3 * crspans[1] + 
     y
-  Htext(txtxpoints, txtypoints, names)
+  hand_text(txtxpoints, txtypoints, names)
   par(oldcex)
 }
 
@@ -482,10 +458,11 @@ small_chop <- function(x) {
 #' Draws a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object in a 'hand drawn'
 #' style. 
 #'
-#' @usage sketch_it(spdf,...)
-#' spdf \%>\% sketch_it(...)
+#' @usage sketch_it(spdf,rough=0.05,...)
+#' spdf \%>\% sketch_it(rough=0.05,...)
 #'
 #' @param spdf  a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#' @param rough controls the 'roughness' of the sketched polygon edges
 #' @param ... parameters passed to \code{\link[graphics]{lines}}
 #'
 #' @return NULL
@@ -495,10 +472,10 @@ small_chop <- function(x) {
 #' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
 #' # Create a blank canvas with extent containing p1
 #' p1 %>% make_canvas %>% sketch_it(col='indianred')
-sketch_it <- function(x,...) {
-  sketch_it0 <- function(x,...) Hscribble(x@coords[,1],x@coords[,2],...)
-  sketch_it1 <- function(x,...) lapply(x@Polygons,sketch_it0,...)  
-  lapply(x@polygons,sketch_it1,...) %>% invisible
+sketch_it <- function(x,rough=0.05,...) {
+  sketch_it0 <- function(x,rough,...) Hscribble(x@coords[,1],x@coords[,2],rough=rough,...)
+  sketch_it1 <- function(x,rough,...) lapply(x@Polygons,sketch_it0,rough=rough,...)  
+  lapply(x@polygons,sketch_it1,rough=rough,...) %>% invisible
 }
 
 #' 'Curvify' polygon-based objects.
@@ -555,7 +532,25 @@ make_canvas <- function(spdf) {
   return(spdf)
 }
 
-
+#' Generalise an object
+#'
+#' Apply a generalisation algorithm to a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object.
+#' 
+#' @usage generalise_it(spdf,tol)
+#' spdf %>% generalise_it(tol)
+#' 
+#' @param spdf  A \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object 
+#' @param tol The tolerance of the generalising algorithm.  The higher this is,  the cruder the generalisation.  For caricaturing,  it should be reasonably high - eg 10000 for the Irish National Grid in metres.
+#'
+#' @return A generalised \link[sp]{SpatialPolygons} object
+#' @export
+#'
+#' @examples
+#' data(RA)
+#' RA.spdf %>% small_chop %>% generalise_it(10000) %>% plot
+generalise_it <- function(spdf,tol) {
+  gSimplify(spdf,tol=tol)
+}
 
 #' Make all polygons in an object convex
 #' 

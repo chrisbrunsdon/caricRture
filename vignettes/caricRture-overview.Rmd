@@ -1,0 +1,98 @@
+---
+title: "Getting Started With CaricRture"
+author: "Chris Brunsdon"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with CaracRture}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+
+The `caricRture` package is used to create maps (and possibly other graphics) that have the appearance of being hand drawn.  The algorithms used to acheive this are derived from [Wood *et. al.* (2012)](https://web.archive.org/web/20140913142528/http://openaccess.city.ac.uk/1274/). Hand drawn maps are useful to convey the impression that the geographical data being shown is in some way imprecise,  or vague.  The degree of 'roughness' of the hand drawing is controllable,  and it is possible to draw in a number of styles - for example to give the appearance of marker pens,  or pencil sketches.
+
+## Setting up the package
+At the moment,  the package exists only on `github`.  On an R session on a computer connected to the internet,  enter:
+```{r, eval=FALSE}
+install_github('chrisbrunsdon/caricRture')
+```
+to install the package.  To load the package,  just enter
+```{r,message=FALSE}
+library(caricRture)
+```
+The package is designed to work well with `dplyr`,  in particular tyhe *pipeline* approach,  and also to work with `SpatialPolygons`,`SpatialPolygonsDataFrame` classes of geographical objects as supplied by the `sp` package.  A practice `SpatialPolygonsDataFrame` based on Irish NUTS3 regions is provided in the data set `RA` - the actual object is called `RA.spdf`:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+data(RA)
+RA.spdf %>% plot
+```
+Although the more conventional `plot(RA.spdf)` could have been used here,  the `%>%` form is useful,  as a general approach used by this package is to pipeline objects through various transformations,  quite often culminating in the `plot` command to produce a final map.   For example,  the `small_chop` function chops away smaller polygons that are part of multipolygons in spatial objects.  Typically these are small islands or enclaves.  Dropping these sometimes simplifies the shape of polygons,  which is useful for caricaturing and generalisation.
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% plot
+```
+Notice that now the islands are no longer included in the map.  The form of the command illustrates the pipeline - the `SpatialPolygonsDataFrame` called `RA.spdf` is first fed into `small_chop`  and the output from this is fed into `plot`.  Again,  it is possible to use `plot(small_chop(RA.spdf))` here,  but this form is less legible.  This distinction would be even greater if there were several functions comprising the 'pipeline'.
+
+## Some Basic Tools
+The above example (`small_chop`) is a basic pipeline functuion to transform `SpatialPolygons` and `SpatialPolygonsDataFrames` - there are a number of these.  Another is the `generalise_it` function - the effectively reduces the number of points used to make up the polygons in an object - although it doesn't guarantee that the resultant polygons do not overlap. 
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% plot
+```
+For those familiar,  this is actually the [Ramer-Douglas-Peuker Algorithm](https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm) - although in this context the tolerance parameter is much higher than usually used - for example around 10km for mapsof Ireland.  Note also that it is most effective in this context if any small islands are removed before it is applied. At this stage a possible 'sketchy' map can be created.   To do this,  another function `sketch_it` is used.   However,  unlike `plot` it requires that a 'canvas' is specified - that is that the map extent is set up.  This can be done by passing a spatial object through the `make_canvas` function.  In pipeline terms,  this function returns its input unaltered,  but has the side effect of setting up a canvas. With this done, `sketch_it` may be used:
+
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% sketch_it
+```
+
+The parameter `rough` allows the 'roughness' or sketchiness of the drawn lines to be controlled.  The default value is 0.05 - below a less rough sketch is created:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% sketch_it(rough=0.01)
+```
+
+Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+
+- Never uses retina figures
+- Has a smaller default figure size
+- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+
+## Vignette Info
+
+Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

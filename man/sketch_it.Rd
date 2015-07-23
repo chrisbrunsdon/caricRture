@@ -4,10 +4,12 @@
 \alias{sketch_it}
 \title{Sketchy drawing of a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object}
 \usage{
-sketch_it(spdf,...)
-spdf \%>\% sketch_it(...)
+sketch_it(spdf,rough=0.05,...)
+spdf \%>\% sketch_it(rough=0.05,...)
 }
 \arguments{
+\item{rough}{controls the 'roughness' of the sketched polygon edges}
+
 \item{...}{parameters passed to \code{\link[graphics]{lines}}}
 
 \item{spdf}{a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object}
