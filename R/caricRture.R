@@ -326,6 +326,8 @@ Htitle <- function(...)
 #'
 #' @return No value returned
 #' @export
+#' 
+#' @details You'll need to have the 'Bradley Hand Bold' font installed 
 #'
 #' @examples
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
