@@ -284,12 +284,13 @@ Hscribble <- function(x,y,rough=0.05,overdraw=TRUE,border='black',col=rgb(0.4,0.
 
 #' Title with 'handwritten' font
 #' 
-#' Works like the \link[graphics]{title} command,  but chooses a hand writing styled font 'Bradley Hand Bold'.
+#' Works like the \link[graphics]{title} command,  but chooses a hand writing styled font.
 #'
-#' @usage Htitle(txt,...)
-#' txt \%>\% Htitle(...)
+#' @usage hand_title(txt,fontfam='am',...)
+#' txt \%>\% hand_title(...)
 #'
 #' @param txt a character string to write as the title
+#' @param fontfam Handwritten font family - see \link{get_fonts}
 #' @param ... other parameters passed on to the \link[graphics]{title} function
 #'
 #' @return No value returned
@@ -299,9 +300,19 @@ Hscribble <- function(x,y,rough=0.05,overdraw=TRUE,border='black',col=rgb(0.4,0.
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
 #' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
 #' # canvas.
+#' get_fonts()
 #' data(RA) 
 #' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% make_canvas %>% sketch_it(col='orange')
-#' 'NUTS3 Regions in Ireland' %>% Htitle
+#' 'NUTS3 Regions in Ireland' %>% hand_title(fontfam='gr')
+hand_title <- function(lbl,fontfam='am',...) {
+  showtext.begin()
+  fam <- par('family')
+  par(family=fontfam)
+  title(lbl,...)
+  par(family=fam)
+  showtext.end()
+}
+
 Htitle <- function(...)
   if (names(dev.cur()) == 'pdf') {
     title(...)
@@ -313,30 +324,41 @@ Htitle <- function(...)
 
 #' Text with 'handwritten' font
 #' 
-#' Works like the \link[graphics]{text} command,  but chooses a hand writing styled font 'Bradley Hand Bold'.
+#' Works like the \link[graphics]{text} command,  but chooses a hand writing styled font.
 #' Also,  parameter order is changed so that the text label comes first - useful for pipelining with \code{\%>\%}.
 #'
-#' @usage Htext(txt,x,y,...)
-#' txt \%>\% Htitle(x,y,...)
+#' @usage hand_text(txt,x,y,fontfam='am',,...)
+#' txt \%>\% hand_text(x,y,fontfam='am',...)
 #'
 #' @param txt a character string to write as the title
 #' @param x x coordinate of text location
-#' @param y y coordinate of text location
-#' @param ... other parameters passed on to the \link[graphics]{title} function
+#' @param y y coordinate of text location - if missing, loks in \code{x} for both coordinates
+#' @param fontfam Handwritten font family - see \link{get_fonts}
+#' @param ... other parameters passed on to the \link[graphics]{text} function
 #'
 #' @return No value returned
 #' @export
 #' 
-#' @details You'll need to have the 'Bradley Hand Bold' font installed 
-#'
+#' 
 #' @examples
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
 #' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
 #' # canvas.
+#' get_fonts()
 #' data(RA) 
 #' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% make_canvas %>% sketch_it(col='lightgrey',lwd=0.5)
 #' RA.spdf %>% coordinates -> label_points
-#' RA.spdf$NUTS3NAME %>% Htext(label_points,col='darkred')
+#' RA.spdf$NUTS3NAME %>% hand_text(label_points,col='darkred',fontfam='pm',cex=0.7)
+hand_text <- function(lbl,x,y=NULL,fontfam='am',...) {
+  showtext.begin()
+  fam <- par('family')
+  par(family=fontfam)
+  text(x,y,label=lbl,...)
+  par(family=fam)
+  showtext.end()
+}
+
+
 Htext <- function(lbl,x,y=NULL,...)
   if (names(dev.cur()) == 'pdf') {
     text(x,y,label=lbl,...)
@@ -344,8 +366,32 @@ Htext <- function(lbl,x,y=NULL,...)
     text(x,y,label=lbl,...,family='Bradley Hand Bold')
   }
 
-
-Hpdf <- function(...) pdf(...,family=bradley)
+#' Convenience driver for PDFs with hand written font
+#' 
+#' 
+#' 
+#' Works like the \link[grDevices]{pdf} command,  but specifies a hand writing styled font 'Bradley Hand Bold'.
+#' 
+#' @usage Hpdf(file)
+#' file \%>\% Hpdf(...)
+#'
+#' @param file file name to write to
+#' @param ... other parameters passed on to the \link[grDevices]{pdf} function
+#'
+#' @return No value returned
+#' @export
+#' 
+#' @details You'll need to have the 'Bradley Hand Bold' font installed 
+#'
+#' @examples
+#' # Create a sketchy map and write to a pdf file
+#' data(RA) 
+#' 'test.pdf' %>% Hpdf(h=6,w=10)
+#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% make_canvas %>% sketch_it(col='lightgrey',lwd=0.5)
+#' RA.spdf %>% coordinates -> label_points
+#' RA.spdf$NUTS3NAME %>% Htext(label_points,col='darkred')
+#' dev.off()
+Hpdf <- function(...) pdf(...,family='Amatic')
 
 Hcompass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), overdraw=FALSE, ...) 
 {
@@ -591,6 +637,45 @@ tidy_it <- function(x) {
 
 
 
+
+#' Install some Google handwriting-style fonts
+#'
+#' Use this function once to install some hand-written style fonts
+#' (from Google Fonts \url{https://www.google.com/fonts}) into R.  
+#' 
+#' @details For this function to run successfully, computer must be connected to the internet.
+#' At the time of writing,  \pkg{caricRture} uses \pkg{showtext} to handle the fonts.  That package doesn't
+#' work well with the RStudio graphics device - better to use \code{quartz} or \code{X11} to write to a floating
+#' window if using RStudio. Each font has a two-letter abbreviation,  which can be used as a \code{family} parameter
+#' in \code{par}.  The abbreviations and associated fonts are: 
+#' \describe{
+#' \item{am}{Amatic SC}
+#' \item{dk}{Dekko}
+#' \item{gr}{Covered By Your Grace}
+#' \item{hl}{Handlee}
+#' \item{pm}{Permanent Marker}
+#' }
+#' 
+#'
+#' @return Nothing is returned
+#' @export
+#'
+#' @examples
+#' get_fonts() # Thats basically it - once run,  fonts will be installed
+get_fonts <- function() {
+  font.add.google("Dekko","dk")
+  font.add.google("Amatic SC", "am")
+  font.add.google("Covered By Your Grace","gr")
+  font.add.google("Handlee","hl")
+  font.add.google("Permanent Marker","pm")
+}
+
+# showtext.begin()
+# fm <- par('family')
+# par(family='am')
+# 
+# par(family=fm)
+# showtext.end()
 
 
 # # Some demo stuff
