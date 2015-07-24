@@ -9,16 +9,16 @@ A \link[sp]{SpatialPolygonsDataFrame} of NUTS3 regions in Ireland,  with some as
 \details{
 Data frame contains the following variables;
 \describe{
- \item{NUTS1}{NUTS1 Region code.}
- \item{NUTS1NAME}{NUTS1 Region name.}
- \item{NUTS2}{NUTS2 Region code.}
- \item{NUTS2NAME}{NUTS2 Region name.}
- \item{NUTS3}{NUTS3 Region code.}
- \item{NUTS3NAME}{NUTS3 Region name.}
- \item{GEOGID}{Irish region code.}
- \item{MALE2011}{Male population (2011 Irish Census).}
- \item{FEMALE2011}{Female population (2011 Irish Census).}
- \item{TOTAL2011}{Total population (2011 Irish Census).}
+ \item{NUTS1}{NUTS1 Region code}
+ \item{NUTS1NAME}{NUTS1 Region name}
+ \item{NUTS2}{NUTS2 Region code}
+ \item{NUTS2NAME}{NUTS2 Region name}
+ \item{NUTS3}{NUTS3 Region code}
+ \item{NUTS3NAME}{NUTS3 Region name}
+ \item{GEOGID}{Irish region code}
+ \item{MALE2011}{Male population (2011 Irish Census)}
+ \item{FEMALE2011}{Female population (2011 Irish Census)}
+ \item{TOTAL2011}{Total population (2011 Irish Census)}
 }
 }
 

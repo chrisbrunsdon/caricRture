@@ -48,51 +48,54 @@ The parameter `rough` allows the 'roughness' or sketchiness of the drawn lines t
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
 RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% sketch_it(rough=0.01)
 ```
-
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
-
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+It is also possible to 'tidy' the overlaps using the function `tidy_it` - when a pair of polygons overlap, this algorithm curts away the overlapping part of the larger polygon:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% plot
+```
+That was shown in non-sketchy form to make clear the geometrical process,  but is a useful tool for sketching as well:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  make_canvas %>% sketch_it(rough=0.02,col='darkred')
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+## Hole Filling
+The `tidy-it` function deals with overlaps bewtween component polygons,  but not gaps.  One way of dealing with gaps is to use the `dilate_it` function.  This essentially creates a buffer around each of the polygons.  The idea here is to expand them to fill out any holes.  It may be that in sketchy terms  the holes are not an issue and this is really a matter of style.  However since things are being represented in sketch form,  I see no problem with this.  Here,  the effect is shown:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% dilate_it(3500) %>% plot
+```
+In true Laurel and Hardy style,  of course this brings back lots of overlaps.  So,  tidy up again...
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% plot
+```
+This can be made sketchy without much difficulty:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% make_canvas %>% sketch_it(col='maroon')
 ```
 
-Also a quote using `>`:
+## Stylistic Modifications - Dealing With Outer Boundaries
+Oddly,  although the holes are now filled in,   the overlapping lines on coterminous regions look overly complex,  compared to the border and coastal areas - the 'outer boundaries'.  There are a couple of work-arounds for this.  Firstly,  a function called `outline_it` finds the external outline of a set of polygons. By potting the external boundaries after the original map,  at least the external boundaries also get over-written,  so that the style is consistent.  Like `make_canvas`, `sketch_it` is another command that passes the input argument through,  drawing the sketchy map as a side effect.   This can be exploited here,  where the output (ie the object being sketched) is passed on to `outline_it` before being re-sketched.
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% make_canvas %>% sketch_it(col='darkorange') %>%
+  outline_it %>% sketch_it(col=NA)
+```
+The alternative is to use `contract_it` - this effectively buffers all of the polygons inwardly by a fixed amount.  This then leaves a clear gap between each polygon.  Sometimes this is useful - unlike the holes earlier these are evenly distributed,  and really just constitute an alternative sketch style.   Here is the result of using this approach:
+```{r,fig.width=5,fig.height=6,fig.align='center'}
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% contract_it(3000) %>% 
+  make_canvas %>% sketch_it(col='turquoise') 
+```
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+## Curvy Representations
+As well as 'hand-drawn' effects, `caricRture` also offers curvy representations of boundaries.   These are achieved using the `curve_it` function.  This takes a 'shape' parameter.   If this is zero,  the transformed shapes are identical to those input,  and if equal to one a much smoother curve results - the function makes use of the `xspline` function - the help page for this explains in greater detail.   Values between zero and one result in intermediate degrees of smoothness. Here,  it is used to provide a 'curvy' version of the Irish regions:
+```{r,fig.width=5,fig.height=6,fig.align='center',fig.keep='last'}
+plot.new()
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% curve_it(0.8) %>% plot
+```
+
+
+
+

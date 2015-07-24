@@ -5,7 +5,7 @@ Authors@R: person("Chris", "Brunsdon", , "christopher.brunsdon@nuim.ie", role =
     c("aut", "cre"))
 Description: Draws 'Sketchy' style maps in R - drawing styles appear
     hand-drawn.  Also curvilinear drawing is possible.
-Depends: 
+Depends:
     R (>= 3.1.1),
     dplyr,
     rgeos,
@@ -13,5 +13,6 @@ Depends:
     sp
 License: GPL-3
 LazyData: true
-Suggests: knitr
+Suggests:
+    knitr
 VignetteBuilder: knitr

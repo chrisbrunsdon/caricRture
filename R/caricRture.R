@@ -34,19 +34,34 @@ NULL
 #' 
 #' Data frame contains the following variables;
 #' \describe{
-#'  \item{NUTS1}{NUTS1 Region code.}
-#'  \item{NUTS1NAME}{NUTS1 Region name.}
-#'  \item{NUTS2}{NUTS2 Region code.}
-#'  \item{NUTS2NAME}{NUTS2 Region name.}
-#'  \item{NUTS3}{NUTS3 Region code.}
-#'  \item{NUTS3NAME}{NUTS3 Region name.}
-#'  \item{GEOGID}{Irish region code.}
-#'  \item{MALE2011}{Male population (2011 Irish Census).}
-#'  \item{FEMALE2011}{Female population (2011 Irish Census).}
-#'  \item{TOTAL2011}{Total population (2011 Irish Census).}
+#'  \item{NUTS1}{NUTS1 Region code}
+#'  \item{NUTS1NAME}{NUTS1 Region name}
+#'  \item{NUTS2}{NUTS2 Region code}
+#'  \item{NUTS2NAME}{NUTS2 Region name}
+#'  \item{NUTS3}{NUTS3 Region code}
+#'  \item{NUTS3NAME}{NUTS3 Region name}
+#'  \item{GEOGID}{Irish region code}
+#'  \item{MALE2011}{Male population (2011 Irish Census)}
+#'  \item{FEMALE2011}{Female population (2011 Irish Census)}
+#'  \item{TOTAL2011}{Total population (2011 Irish Census)}
 #' }
 #' @name RA
 NULL
+
+#' Generalised NUTS3 regions for the island of Ireland (including Northern Ireland)
+#' 
+#' A \link[sp]{SpatialPolygonsDataFrame} of NUTS3 regions in the island of Ireland,  with some associated variables
+#' 
+#' Data frame contains the following variables;
+#' \describe{
+#'  \item{NUTS_ID}{NUTS3 Region code}
+#'  \item{STAT_LEVL_}{Statistical level}
+#'  \item{SHAPE_AREA}{Region area}
+#'  \item{NUTS2NAME}{Region perimeter}
+#' }
+#' @name all_ireland
+NULL
+
 
 get_item <- `[[`
 
@@ -79,9 +94,10 @@ get.IDs <- function(x) sapply(x@polygons, function(y) y@ID)
 clone_data <- function(sp,spdf) SpatialPolygonsDataFrame(sp,data.frame(spdf))
 
 
-.Hstroke <- function(x1,y1,x2,y2,rough,anchor=FALSE,...) {
+.Hstroke <- function(x1,y1,x2,y2,rough,lmin=0,anchor=FALSE,...) {
   
   r <- .rough2rad(rough)
+  dmin <- .rough2rad(lmin)
   flitter <- runif(1,0.7,0.8)
   dx <- x2 - x1
   dy <- y2 - y1
@@ -93,8 +109,11 @@ clone_data <- function(sp,spdf) SpatialPolygonsDataFrame(sp,data.frame(spdf))
   
   radius <- rep(r,4)
   radius[2] <- l / 200
+  radius <- pmin(radius,l/10)
   angles[3] <- atan2(dy,dx) + pi/2*sample(c(-1,1),1)
   if (anchor) radius[1] <- 0
+  if (l < dmin) radius[2:3] <- 0
+  
   radius <- radius*sqrt(runif(4))
   X <- X + cos(angles)*radius
   Y <- Y + sin(angles)*radius
@@ -113,17 +132,17 @@ clone_data <- function(sp,spdf) SpatialPolygonsDataFrame(sp,data.frame(spdf))
 } 
 
 
-Hstroke <- function(x,y,rough=0.05,overdraw=TRUE,...) {
-  .Hstroke(x[1],y[1],x[2],y[2],rough,...)
-  if (overdraw) .Hstroke(x[1],y[1],x[2],y[2],rough,...)
+Hstroke <- function(x,y,rough=0.05,overdraw=TRUE,lmin=0,...) {
+  .Hstroke(x[1],y[1],x[2],y[2],rough=rough,lmin=lmin,...)
+  if (overdraw) .Hstroke(x[1],y[1],x[2],y[2],rough=rough,lmin=lmin,...)
 }
 
-Hpath <- function(x,y,rough=0.05,overdraw=TRUE,...) {
-  anchor <- .Hstroke(x[1],y[1],x[2],y[2],rough,...)
-  for (i in 3:length(x)) anchor <- .Hstroke(anchor$x,anchor$y,x[i],y[i],rough,anchor=TRUE,...)
+Hpath <- function(x,y,rough=0.05,lmin=0,overdraw=TRUE,...) {
+  anchor <- .Hstroke(x[1],y[1],x[2],y[2],rough=rough,lmin=lmin,...)
+  for (i in 3:length(x)) anchor <- .Hstroke(anchor$x,anchor$y,x[i],y[i],rough=rough,lmin=lmin,anchor=TRUE,...)
   if (!overdraw) return()
-  anchor <- .Hstroke(x[1],y[1],x[2],y[2],rough,...)
-  for (i in 3:length(x)) anchor <- .Hstroke(anchor$x,anchor$y,x[i],y[i],rough,anchor=TRUE,...)  
+  anchor <- .Hstroke(x[1],y[1],x[2],y[2],rough=rough,lmin=lmin,...)
+  for (i in 3:length(x)) anchor <- .Hstroke(anchor$x,anchor$y,x[i],y[i],rough=rough,lmin=lmin,anchor=TRUE,...)  
 }
 
 Hpolygon <-  function(x,y,rough=0.05,overdraw=TRUE,col=rgb(0,0,0,0.4),border='black',...) {
@@ -252,7 +271,7 @@ Hhatch <- function(x,y,rough=0.05,overdraw=TRUE,col=rgb(0.4,0.4,0.4),border='bla
 } 
 
 
-Hscribble <- function(x,y,rough=0.05,overdraw=TRUE,border='black',col=rgb(0.4,0.4,0.4),pitch=0.1,...) {
+Hscribble <- function(x,y,rough=0.05,lmin=0,overdraw=TRUE,border='black',col=rgb(0.4,0.4,0.4),pitch=0.1,...) {
   polyg <- as(cbind(x,y),'gpc.poly')
   polyg <- as(polyg,'SpatialPolygons')
   bb <- polyg@bbox
@@ -272,13 +291,13 @@ Hscribble <- function(x,y,rough=0.05,overdraw=TRUE,border='black',col=rgb(0.4,0.
   top <- max(seqy)
   for (i in 1:length(seqx))  {
     hatch <- .lineclip(lhs,seqy[i],seqx[i],top,polyg)
-    if (!is.null(hatch)) for (item in hatch) Hstroke(item[,1],item[,2],rough=rough,col=col,overdraw=FALSE,...)
+    if (!is.null(hatch)) for (item in hatch) Hstroke(item[,1],item[,2],rough=rough,col=col,lmin=lmin,overdraw=FALSE,...)
   }
   for (i in 1:length(seqx))  {
     hatch <- .lineclip(seqx[i],btm,rhs,seqy[i],polyg)
-    if (!is.null(hatch)) for (item in hatch) Hstroke(item[,1],item[,2],rough=rough,col=col,overdraw=FALSE,...)
+    if (!is.null(hatch)) for (item in hatch) Hstroke(item[,1],item[,2],rough=rough,col=col,lmin=lmin,overdraw=FALSE,...)
   }
-  if (!is.na(border)) Hpath(x,y,rough=rough,overdraw=overdraw,col=border,...)
+  if (!is.na(border)) Hpath(x,y,rough=rough,lmin=lmin,overdraw=overdraw,col=border,...)
 } 
 
 
@@ -465,17 +484,18 @@ small_chop <- function(x) {
 #' @param rough controls the 'roughness' of the sketched polygon edges
 #' @param ... parameters passed to \code{\link[graphics]{lines}}
 #'
-#' @return NULL
+#' @return the input \code{spdf} - useful for pipelines
 #' @export
 #'
 #' @examples
 #' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
 #' # Create a blank canvas with extent containing p1
 #' p1 %>% make_canvas %>% sketch_it(col='indianred')
-sketch_it <- function(x,rough=0.05,...) {
-  sketch_it0 <- function(x,rough,...) Hscribble(x@coords[,1],x@coords[,2],rough=rough,...)
-  sketch_it1 <- function(x,rough,...) lapply(x@Polygons,sketch_it0,rough=rough,...)  
-  lapply(x@polygons,sketch_it1,rough=rough,...) %>% invisible
+sketch_it <- function(x,rough=0.05,lmin=0,...) {
+  sketch_it0 <- function(x,rough,lmin,...) Hscribble(x@coords[,1],x@coords[,2],rough=rough,lmin=lmin,...)
+  sketch_it1 <- function(x,rough,lmin,...) lapply(x@Polygons,sketch_it0,rough=rough,lmin=lmin,...)  
+  lapply(x@polygons,sketch_it1,rough=rough,lmin=lmin,...)
+  x  %>% invisible
 }
 
 #' 'Curvify' polygon-based objects.
@@ -507,6 +527,26 @@ curve_it <- function(x,s) {
   curve_it1 <- function(x,s) lapply(x@Polygons,function(q) curve_it0(q,s)) %>% Polygons(x@ID)
   lapply(x@polygons,function(q) curve_it1(q,s)) %>% SpatialPolygons }
 
+
+#' Find the outline of a group of polygons 
+#'
+#' Outline from a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#' - any internal holes are filled in.
+#'  
+#' @usage outline_it(spdf)
+#' spdf %>% outline_it
+#' 
+#' @param spdf A \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame}
+#'
+#' @return A \link[sp]{SpatialPolygons} outline of the input object
+#' @export
+#'
+#' @examples
+#' data(RA)
+#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% outline_it %>% plot
+outline_it <- function(spdf) {
+  spdf %>% gUnaryUnion %>% hole_chop 
+}
 
 #' Create a new canvas
 #'
@@ -630,7 +670,50 @@ tidy_it <- function(x) {
   return(x)
 }
 
+#' Dilate (expand) polygons in an object
+#'
+#' Dilate the polygons in a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#'
+#' @usage dilate_it(spdf,r)
+#' spdf %>% dilate_it(r)
+#' 
+#' @param spdf A \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#' @param r Radius of dilation
+#'
+#' @return A \link[sp]{SpatialPolygons} object with the dilation applied
+#' @export 
+#'
+#' @examples
+#' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
+#' dsg <- adjustcolor('darkseagreen',alpha.f=0.5)
+#' p1 %>% dilate_it(3) %>% plot(col=dsg)
+#' p1 %>% plot(col=dsg,add=TRUE)
+#' 
+#' # A sketchy version
+#' p1 %>% dilate_it(3) %>% make_canvas %>% sketch_it(col='navyblue')
+dilate_it <- function(spdf,r) {
+  gBuffer(spdf,width=r,byid=TRUE)
+}
 
+#' Contract polygons in an object
+#'
+#' @param spdf A \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#' @param r  Radius of contraction
+#'
+#' @return A \link[sp]{SpatialPolygons} object with contraction applied
+#' @export
+#'
+#' @examples
+#' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
+#' dv <- adjustcolor('darkviolet',alpha.f=0.5)
+#' p1 %>% dilate_it(3) %>% plot(col=dv)
+#' p1 %>% plot(col=dv,add=TRUE)
+#' 
+#' # A sketchy version
+#' p1 %>% contract_it(3) %>% make_canvas %>% sketch_it(col='chocolate')
+contract_it <- function(spdf,r) {
+  gBuffer(spdf,width=-r,byid=TRUE)
+}
 
 
 #' Install some Google handwriting-style fonts

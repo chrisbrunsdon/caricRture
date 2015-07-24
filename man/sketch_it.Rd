@@ -14,6 +14,9 @@ spdf \%>\% sketch_it(rough=0.05,...)
 
 \item{spdf}{a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object}
 }
+\value{
+the input \code{spdf} - useful for pipelines
+}
 \description{
 Draws a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object in a 'hand drawn'
 style.
