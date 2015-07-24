@@ -27,8 +27,8 @@ the shape parameter is the same as in that function.
 \examples{
 'indianred' \%>\% adjustcolor(alpha.f=0.3) -> ired
 "POLYGON((0 0,0 2,1 3.5,3 3,4 1,3 0,0 0))" \%>\% readWKT -> p1
-p1 \%>\% plot(col=ired)
-p1 \%>\% curve_it(1) \%>\% plot(add=TRUE,col=ired,lty=2)
-p1 \%>\% curve_it(0.5) \%>\% plot(add=TRUE,col=ired,lty=2)
+p1 \%>\% make_canvas \%>\% plot_it(col=ired)
+p1 \%>\% curve_it(1) \%>\% plot_it(col=ired,lty=2)
+p1 \%>\% curve_it(0.5) \%>\% plot_it(col=ired,lty=2)
 }
 

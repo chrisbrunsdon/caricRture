@@ -9,6 +9,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r setup,echo=FALSE}
+knitr::opts_chunk$set(dev="CairoPNG",dpi = 72)
+options(digits = 4)
+```
+
 ## Introduction
 
 The `caricRture` package is used to create maps (and possibly other graphics) that have the appearance of being hand drawn.  The algorithms used to acheive this are derived from [Wood *et. al.* (2012)](https://web.archive.org/web/20140913142528/http://openaccess.city.ac.uk/1274/). Hand drawn maps are useful to convey the impression that the geographical data being shown is in some way imprecise,  or vague.  The degree of 'roughness' of the hand drawing is controllable,  and it is possible to draw in a number of styles - for example to give the appearance of marker pens,  or pencil sketches.
@@ -22,35 +27,40 @@ to install the package.  To load the package,  just enter
 ```{r,message=FALSE}
 library(caricRture)
 ```
+
+## First steps
 The package is designed to work well with `dplyr`,  in particular tyhe *pipeline* approach,  and also to work with `SpatialPolygons`,`SpatialPolygonsDataFrame` classes of geographical objects as supplied by the `sp` package.  A practice `SpatialPolygonsDataFrame` based on Irish NUTS3 regions is provided in the data set `RA` - the actual object is called `RA.spdf`:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
 data(RA)
-RA.spdf %>% plot
+RA.spdf %>% make_canvas %>% plot_it
 ```
-Although the more conventional `plot(RA.spdf)` could have been used here,  the `%>%` form is useful,  as a general approach used by this package is to pipeline objects through various transformations,  quite often culminating in the `plot` command to produce a final map.   For example,  the `small_chop` function chops away smaller polygons that are part of multipolygons in spatial objects.  Typically these are small islands or enclaves.  Dropping these sometimes simplifies the shape of polygons,  which is useful for caricaturing and generalisation.
+Although the more conventional `plot(RA.spdf)` could have been used here,  the `%>%` form is useful,  as a general approach used by this package is to pipeline objects through various transformations,  quite often culminating in the `plot_it` command to produce a final map.   The `make_canvas` command sets up a blank map extent,  and the `plot_it` function actually plots the map.  `make_canvas` returns its input value - which can then be passed on to the next stage of the pipeline. Its main value is that it has a **side effect** - that of creating the 'canvas'.
+
+An example of a shape-based operation is the `small_chop` function chops away smaller polygons that are part of multipolygons in spatial objects. Typically these are small islands or enclaves.  Dropping these sometimes simplifies the shape of polygons,  which is useful for caricaturing and generalisation - see below:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
-RA.spdf %>% small_chop %>% plot
+RA.spdf %>% small_chop %>% make_canvas %>% plot_it
 ```
 Notice that now the islands are no longer included in the map.  The form of the command illustrates the pipeline - the `SpatialPolygonsDataFrame` called `RA.spdf` is first fed into `small_chop`  and the output from this is fed into `plot`.  Again,  it is possible to use `plot(small_chop(RA.spdf))` here,  but this form is less legible.  This distinction would be even greater if there were several functions comprising the 'pipeline'.
 
-## Some Basic Tools
+## Some More Basic Tools
 The above example (`small_chop`) is a basic pipeline functuion to transform `SpatialPolygons` and `SpatialPolygonsDataFrames` - there are a number of these.  Another is the `generalise_it` function - the effectively reduces the number of points used to make up the polygons in an object - although it doesn't guarantee that the resultant polygons do not overlap. 
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
-RA.spdf %>% small_chop %>% generalise_it(10000) %>% plot
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% plot_it
 ```
-For those familiar,  this is actually the [Ramer-Douglas-Peuker Algorithm](https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm) - although in this context the tolerance parameter is much higher than usually used - for example around 10km for mapsof Ireland.  Note also that it is most effective in this context if any small islands are removed before it is applied. At this stage a possible 'sketchy' map can be created.   To do this,  another function `sketch_it` is used.   However,  unlike `plot` it requires that a 'canvas' is specified - that is that the map extent is set up.  This can be done by passing a spatial object through the `make_canvas` function.  In pipeline terms,  this function returns its input unaltered,  but has the side effect of setting up a canvas. With this done, `sketch_it` may be used:
+For those familiar,  this is actually the [Ramer-Douglas-Peuker Algorithm](https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm) - although in this context the tolerance parameter is much higher than usually used - for example around 10km for mapsof Ireland.  Note also that it is most effective in this context if any small islands are removed before it is applied. At this stage a possible 'sketchy' map can be created.   To do this,  another function `sketch_it` is used,  that works like `plot_it` except it produces images with a hand-drawn appearance.
 
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
-RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% sketch_it
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% sketch_it(col='lightgrey')
 ```
 
-The parameter `rough` allows the 'roughness' or sketchiness of the drawn lines to be controlled.  The default value is 0.05 - below a less rough sketch is created:
+The parameter `rough` in `sketch_it` allows the 'roughness' or sketchiness of the drawn lines to be controlled.  The default value is 0.05 - below a less rough sketch is created:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
-RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% sketch_it(rough=0.01)
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% make_canvas %>% 
+  sketch_it(rough=0.01,col='violetred')
 ```
 It is also possible to 'tidy' the overlaps using the function `tidy_it` - when a pair of polygons overlap, this algorithm curts away the overlapping part of the larger polygon:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
-RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% plot
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% make_canvas %>% plot_it
 ```
 That was shown in non-sketchy form to make clear the geometrical process,  but is a useful tool for sketching as well:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
@@ -61,12 +71,13 @@ RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>%
 ## Hole Filling
 The `tidy-it` function deals with overlaps bewtween component polygons,  but not gaps.  One way of dealing with gaps is to use the `dilate_it` function.  This essentially creates a buffer around each of the polygons.  The idea here is to expand them to fill out any holes.  It may be that in sketchy terms  the holes are not an issue and this is really a matter of style.  However since things are being represented in sketch form,  I see no problem with this.  Here,  the effect is shown:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
-RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% dilate_it(3500) %>% plot
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% make_canvas %>% plot_it
 ```
 In true Laurel and Hardy style,  of course this brings back lots of overlaps.  So,  tidy up again...
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
 RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
-  dilate_it(3500) %>% tidy_it %>% plot
+  dilate_it(3500) %>% tidy_it %>% make_canvas %>% plot_it
 ```
 This can be made sketchy without much difficulty:
 ```{r,fig.width=5,fig.height=6,fig.align='center'}
@@ -90,11 +101,31 @@ RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>%
 
 ## Curvy Representations
 As well as 'hand-drawn' effects, `caricRture` also offers curvy representations of boundaries.   These are achieved using the `curve_it` function.  This takes a 'shape' parameter.   If this is zero,  the transformed shapes are identical to those input,  and if equal to one a much smoother curve results - the function makes use of the `xspline` function - the help page for this explains in greater detail.   Values between zero and one result in intermediate degrees of smoothness. Here,  it is used to provide a 'curvy' version of the Irish regions:
-```{r,fig.width=5,fig.height=6,fig.align='center',fig.keep='last'}
+```{r,fig.width=5,fig.height=6,fig.align='center',fig.keep='last',echo=-1}
 plot.new()
 RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
-  dilate_it(3500) %>% tidy_it %>% curve_it(0.8) %>% plot
+  dilate_it(3500) %>% tidy_it %>% curve_it(0.8) %>% make_canvas %>% plot_it
 ```
+
+Because `plot_it` passes its input argument directly through,  it is viable to re-use this.  Here,  it is used in tandem with `sketch_it` to provide a set of curvy outlines,  with a sketched filling.  Using a quite thick line (`lwd=4`) gives a 'felt tipped pen' style:
+```{r,fig.width=5,fig.height=6,fig.align='center',fig.keep='last',echo=-1}
+plot.new()
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% curve_it(0.8) %>% make_canvas %>% plot_it(lwd=4) %>%
+  sketch_it(col='darkgreen',border=NA)
+```
+
+
+## Working with text
+
+```{r,fig.width=5,fig.height=6,fig.align='center', fig.showtext=TRUE}
+get_fonts()
+data(RA)
+RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% make_canvas %>% 
+  sketch_it(col='orange')
+'NUTS3 Regions in Ireland' %>% hand_title(fontfam='am',cex=1.3)
+```
+
 
 
 

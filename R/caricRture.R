@@ -271,7 +271,7 @@ Hhatch <- function(x,y,rough=0.05,overdraw=TRUE,col=rgb(0.4,0.4,0.4),border='bla
 } 
 
 
-Hscribble <- function(x,y,rough=0.05,lmin=0,overdraw=TRUE,border='black',col=rgb(0.4,0.4,0.4),pitch=0.1,...) {
+Hscribble <- function(x,y,rough=0.05,lmin=0,overdraw=TRUE,border='black',col=NA,pitch=0.1,...) {
   polyg <- as(cbind(x,y),'gpc.poly')
   polyg <- as(polyg,'SpatialPolygons')
   bb <- polyg@bbox
@@ -519,9 +519,9 @@ sketch_it <- function(x,rough=0.05,lmin=0,...) {
 #' @examples 
 #' 'indianred' %>% adjustcolor(alpha.f=0.3) -> ired
 #' "POLYGON((0 0,0 2,1 3.5,3 3,4 1,3 0,0 0))" %>% readWKT -> p1
-#' p1 %>% plot(col=ired)
-#' p1 %>% curve_it(1) %>% plot(add=TRUE,col=ired,lty=2)
-#' p1 %>% curve_it(0.5) %>% plot(add=TRUE,col=ired,lty=2)
+#' p1 %>% make_canvas %>% plot_it(col=ired)
+#' p1 %>% curve_it(1) %>% plot_it(col=ired,lty=2)
+#' p1 %>% curve_it(0.5) %>% plot_it(col=ired,lty=2)
 curve_it <- function(x,s) { 
   curve_it0 <- function(x,s) xspline(x@coords,shape=s,open=FALSE,draw=FALSE) %>% close_poly %>% Polygon
   curve_it1 <- function(x,s) lapply(x@Polygons,function(q) curve_it0(q,s)) %>% Polygons(x@ID)
@@ -543,9 +543,32 @@ curve_it <- function(x,s) {
 #'
 #' @examples
 #' data(RA)
-#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% outline_it %>% plot
+#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% outline_it %>% make_canvas %>% plot_it
 outline_it <- function(spdf) {
   spdf %>% gUnaryUnion %>% hole_chop 
+}
+
+
+#' Plotting function - pipeline friendly
+#' 
+#' Works like \code{plot} but returns the input object (good in pipelines).
+#' Requires \link{make_canvas} to have been called (probably in a pipeline).
+#' 
+#' @usage plot_it(spdf,...)
+#' spdf %>% plot_it(...)
+#'
+#' @param spdf A \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame}
+#' @param ... Other parameters to pass on to \link[graphics]{plot}
+#'
+#' @return as \code{spdf}
+#' @export
+#'
+#' @examples
+#' data(all_ireland)
+#' all_ireland %>% make_canvas %>% plot_it
+plot_it <- function(spdf,...) {
+  plot(spdf,add=TRUE,...)
+  spdf %>% invisible
 }
 
 #' Create a new canvas
@@ -568,6 +591,7 @@ outline_it <- function(spdf) {
 #' data(RA) 
 #' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% make_canvas %>% sketch_it(col='orange')
 make_canvas <- function(spdf) {
+  par(mar=c(0.5,0.5,3,0.5))
   plot(spdf,border=NA)
   return(spdf)
 }

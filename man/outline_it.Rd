@@ -19,6 +19,6 @@ Outline from a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame}
 }
 \examples{
 data(RA)
-RA.spdf \%>\% small_chop \%>\% gSimplify(tol=11000) \%>\% tidy_it \%>\% outline_it \%>\% plot
+RA.spdf \%>\% small_chop \%>\% gSimplify(tol=11000) \%>\% tidy_it \%>\% outline_it \%>\% make_canvas \%>\% plot_it
 }
 
