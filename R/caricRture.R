@@ -756,6 +756,8 @@ contract_it <- function(spdf,r) {
 #' \item{gr}{Covered By Your Grace}
 #' \item{hl}{Handlee}
 #' \item{pm}{Permanent Marker}
+#' \item{rs}{Rock Salt}
+#' \item{ws}{Waiting for the Sunrise}
 #' }
 #' 
 #'
@@ -770,6 +772,8 @@ get_fonts <- function() {
   font.add.google("Covered By Your Grace","gr")
   font.add.google("Handlee","hl")
   font.add.google("Permanent Marker","pm")
+  font.add.google("Rock Salt","rs")
+  font.add.google("Waiting for the Sunrise","ws")
 }
 
 # showtext.begin()

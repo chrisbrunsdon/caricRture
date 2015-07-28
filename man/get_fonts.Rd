@@ -25,6 +25,8 @@ in \code{par}.  The abbreviations and associated fonts are:
 \item{gr}{Covered By Your Grace}
 \item{hl}{Handlee}
 \item{pm}{Permanent Marker}
+\item{rs}{Rock Salt}
+\item{ws}{Waiting for the Sunrise}
 }
 }
 \examples{

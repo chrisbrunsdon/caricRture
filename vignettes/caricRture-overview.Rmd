@@ -126,10 +126,10 @@ get_fonts()
 data(RA)
 RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% make_canvas %>% 
   sketch_it(col='orange')
-'NUTS3 Regions in Ireland' %>% hand_title(fontfam='am',cex=1.3)
+'NUTS3 Regions in Ireland' %>% hand_title(fontfam='rs',cex=1.3)
 ```
 
-The parameter `fontfam` refers to the font family.   At the moment,  five hand-written styled fonts are provided,  all of which are available from Google fonts.  The fonts are:
+The parameter `fontfam` refers to the font family.   At the moment,  seven hand-written styled fonts are provided,  all of which are available from Google fonts.  The fonts are:
 
 ---------------------------------------------------------------------
  `fontfam` parameter       Google font name
@@ -143,7 +143,21 @@ gr                    Covered By Your Grace
 hl                    Handlee
 
 pm                    Permanent Marker
+
+ws                    Waiting for the Sunrise
+
+rs                    Rock Salt
 ---------------------------------------------------------------------
+
+Samples of each are shown below:
+
+```{r,fig.showtext=TRUE,echo=FALSE,fig.width=7,fig.height=6,fig.align='center'}
+get_fonts()
+ff <- c("am","dk","gr","hl","pm","ws","rs")
+par(mar=c(0,0,0,0))
+plot(c(0,8),c(0,8),asp=1,type='n',axes=FALSE,xlab='',ylab='')
+for (i in 1:7) hand_text(sprintf("%s sample",ff[i]),i,i,fontfam=ff[i],cex=2,col='chocolate4')
+```
 
 
 A further text tool is the `hand_text` function.  This works in the same way as the standard `text` function and allows annotation to be placed anywhere on the map. Here,  the `pm` style is used on the curvy map: 
