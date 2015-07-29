@@ -132,21 +132,21 @@ RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% make_canvas %>%
 The parameter `fontfam` refers to the font family.   At the moment,  seven hand-written styled fonts are provided,  all of which are available from Google fonts.  The fonts are:
 
 ---------------------------------------------------------------------
- `fontfam` parameter       Google font name
---------------------- -----------------------------------------------
-am                    Amatic SC
+ `fontfam` parameter       Google font name           Default
+--------------------- ----------------------------- -----------------
+am                    Amatic SC                     Yes
 
-dk                    Dekko
+dk                    Dekko                         No
 
-gr                    Covered By Your Grace
+gr                    Covered By Your Grace         No
 
-hl                    Handlee
+hl                    Handlee                       No
 
-pm                    Permanent Marker
+pm                    Permanent Marker              No
 
-ws                    Waiting for the Sunrise
+ws                    Waiting for the Sunrise       No
 
-rs                    Rock Salt
+rs                    Rock Salt                     No
 ---------------------------------------------------------------------
 
 Samples of each are shown below:

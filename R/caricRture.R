@@ -428,9 +428,10 @@ Hcompass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), ov
 #' data(RA)
 #' RA.spdf %>% hole_chop %>% plot
 hole_chop <- function(x) {
+  x %>% proj4string %>% CRS -> p4s 
   holechop0 <- function(x) ! x@hole
   holechop1 <- function(x) Filter(holechop0,x@Polygons) %>% Polygons(x@ID)
-  lapply(x@polygons,holechop1) %>% SpatialPolygons }
+  lapply(x@polygons,holechop1) %>% SpatialPolygons(proj4string=p4s) }
 
 
 close_poly <- function(xy) {
@@ -466,9 +467,10 @@ ismax <- function(x) x == max(x)
 #' p1 %>% small_chop %>% plot(col=salmon); title("After")
 #' par(mfrow=old.mf)
 small_chop <- function(x) {
+  x %>% proj4string %>% CRS -> p4s 
   smallchop0 <- function(x) sapply(x,get_area) %>% ismax 
   smallchop1 <- function(x)  subset(x@Polygons,smallchop0(x@Polygons)) %>% Polygons(x@ID)
-  lapply(x@polygons,smallchop1) %>% SpatialPolygons }
+  lapply(x@polygons,smallchop1) %>% SpatialPolygons(proj4string=p4s) }
 
 
 
@@ -523,9 +525,10 @@ sketch_it <- function(x,rough=0.05,lmin=0,...) {
 #' p1 %>% curve_it(1) %>% plot_it(col=ired,lty=2)
 #' p1 %>% curve_it(0.5) %>% plot_it(col=ired,lty=2)
 curve_it <- function(x,s) { 
+  x %>% proj4string %>% CRS -> p4s 
   curve_it0 <- function(x,s) xspline(x@coords,shape=s,open=FALSE,draw=FALSE) %>% close_poly %>% Polygon
   curve_it1 <- function(x,s) lapply(x@Polygons,function(q) curve_it0(q,s)) %>% Polygons(x@ID)
-  lapply(x@polygons,function(q) curve_it1(q,s)) %>% SpatialPolygons }
+  lapply(x@polygons,function(q) curve_it1(q,s)) %>% SpatialPolygons(proj4string=p4s) }
 
 
 #' Find the outline of a group of polygons 
@@ -635,9 +638,10 @@ generalise_it <- function(spdf,tol) {
 #' p1 %>% plot(col=lav)
 #' p1 %>% hull_it %>% plot(col=lav,add=TRUE)
 hull_it <- function(x) {
+  x %>% proj4string %>% CRS -> p4s 
   hull_it0 <- function(x) x@coords[chull(x@coords),] %>% Polygon 
   hull_it1 <- function(x) lapply(x@Polygons,hull_it0) %>% Polygons(x@ID)
-  lapply(x@polygons,hull_it1) %>% SpatialPolygons
+  lapply(x@polygons,hull_it1) %>% SpatialPolygons(proj4string=p4s)
   }
 
 #' Tidy up an object with overlapping polygons
@@ -783,6 +787,41 @@ get_fonts <- function() {
 # par(family=fm)
 # showtext.end()
 
+
+#' Make an OpenStreetMap, Stamen or other map backdrop
+#'
+#' Create a backdrop for sketchy maps,  based on the extent of \code{spdf}.  The backdrop
+#' can be from OpenStreetMap, Google, Stamen, ESRI, bing, Apple or other sources
+#' depending on location. 
+#'
+#' @usage make_backdrop(spdf,...)
+#' spdf %>% make_backdrop(...)
+#'
+#' @param spdf a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#' @param ...  parameters passed on to \link[OpenStreetMap]{openmap} 
+#' 
+#' @details This function requires that \code{spdf} has a well-defined \code{proj4string} in
+#' order to match the backdrop map with the extent of the spatial object.
+#' 
+#' @return Echos \code{spdf} - this is useful for pipelines using \code{\%>\%} 
+#' @export
+#'
+#' @examples
+#' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
+#' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
+#' # backdrop of type osm-bw (monochrome OpenStreetMap)
+#' data(RA) 
+#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% 
+#'   make_backdrop(type='osm-bw') %>% sketch_it(col='darkred',lwd=2,rough=0.08)
+make_backdrop <- function(spdf,...) {
+  spdf %>% spTransform('+init=epsg:4326') %>% slot('bbox') -> bx
+  ul <- c(bx[2,2],bx[1,1])
+  lr <- c(bx[2,1],bx[1,2])
+  mp <- openmap(ul,lr,...)
+  tmp <- openproj(mp,proj4string(spdf))
+  plot(tmp)
+  spdf %>% invisible
+}
 
 # # Some demo stuff
 # # 

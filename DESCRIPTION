@@ -10,7 +10,8 @@ Depends:
     dplyr,
     rgeos,
     showtext,
-    sp
+    sp,
+    OpenStreetMap
 License: GPL-3
 LazyData: true
 Suggests:
