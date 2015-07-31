@@ -63,6 +63,31 @@ NULL
 NULL
 
 
+#' House price data for Greater London
+#' 
+#' A \link[sp]{SpatialPolygonsDataFrame} of London Bouroughs (\code{londonborough}) and a 
+#' \link[sp]{SpatialPointsDataFrame} of London house price data (\code{londonhp}).  The house price data is for 2001
+#' and was supplied by the Nationwide Building Society.  There are 316 house price sales and 20
+#' variables.   
+#' 
+#' The variables are:
+#' \describe{
+#'  \item{PURCHASE}{Purchase price (UKP)}
+#'  \item{FLOORSZ}{Floor size (square metres)}
+#'  \item{TYPEDETCH,TPSEMIDTCH,TYPETRRD,TYPEBNGLW,TYPEFLAT}{House type dummy: Detached, Semi, Terraced,Bungalow,Flat}
+#'  \item{BLDPWW1,BLDINTW,BLDPOSTW,BLD60S,BLD70S,BLD80S,BLD90S}{Dummy for period of building:Pre WW1, Inter-War, Post WW2, or recent decade}
+#'  \item{BATH2}{Two or more bathrooms - indicator}
+#'  \item{BEDS2}{Two bedrooms - indicator}
+#'  \item{GARAGE1}{Garage present - indicator}
+#'  \item{UNEMPLOY}{Unemployment rate in census ward of property}
+#'  \item{PROF}{Rate of employees in professional or managerial employment in census ward of property}
+#' }
+#' @name londonhp
+NULL
+
+
+
+
 get_item <- `[[`
 
 get_area <- function(z) z@area
@@ -466,9 +491,12 @@ ismax <- function(x) x == max(x)
 #' p1 %>% plot(col=salmon); title("Before")
 #' p1 %>% small_chop %>% plot(col=salmon); title("After")
 #' par(mfrow=old.mf)
-small_chop <- function(x) {
+small_chop <- function(x,thresh) {
   x %>% proj4string %>% CRS -> p4s 
-  smallchop0 <- function(x) sapply(x,get_area) %>% ismax 
+  if (missing(thresh)) 
+    smallchop0 <- function(x) sapply(x,get_area) %>% ismax 
+  else
+    smallchop0 <- function(x) sapply(x,get_area) >= thresh
   smallchop1 <- function(x)  subset(x@Polygons,smallchop0(x@Polygons)) %>% Polygons(x@ID)
   lapply(x@polygons,smallchop1) %>% SpatialPolygons(proj4string=p4s) }
 
@@ -494,6 +522,29 @@ small_chop <- function(x) {
 #' # Create a blank canvas with extent containing p1
 #' p1 %>% make_canvas %>% sketch_it(col='indianred')
 sketch_it <- function(x,rough=0.05,lmin=0,...) {
+  params <- append(list(rough=rough,lmin=lmin),list(...))
+  if (all(sapply(params,length) == 1)) return(do.call(sketch_it_all,append(list(x=x),params)))
+  for (i in 1:length(x)) {
+    these_params <- lapply(params,elt,i)
+    do.call(sketch_it_all,append(list(x=x[i]),these_params))
+  }
+  x  %>% invisible
+}
+
+elt <- function(arr,i) {
+  if (length(arr) == 1) return(arr)
+  return(arr[i])
+}
+
+sketch_it_all <- function(x,rough=0.05,lmin=0,...) {
+  sketch_it0 <- function(x,rough,lmin,...) Hscribble(x@coords[,1],x@coords[,2],rough=rough,lmin=lmin,...)
+  sketch_it1 <- function(x,rough,lmin,...) lapply(x@Polygons,sketch_it0,rough=rough,lmin=lmin,...)  
+  lapply(x@polygons,sketch_it1,rough=rough,lmin=lmin,...)
+  x  %>% invisible
+}
+
+
+sketch_it_old <- function(x,rough=0.05,lmin=0,...) {
   sketch_it0 <- function(x,rough,lmin,...) Hscribble(x@coords[,1],x@coords[,2],rough=rough,lmin=lmin,...)
   sketch_it1 <- function(x,rough,lmin,...) lapply(x@Polygons,sketch_it0,rough=rough,lmin=lmin,...)  
   lapply(x@polygons,sketch_it1,rough=rough,lmin=lmin,...)
@@ -693,6 +744,7 @@ tidy_it <- function(x) {
     x <- rbind(x[i],gDifference(x,x[i],byid=TRUE))
     non_clasher <- c(non_clasher[i],non_clasher[-i])
     IDs <- c(IDs[i],IDs[-i])
+    spChFIDs(x) <- IDs
   }
   spChFIDs(x) <- IDs
   return(x)
@@ -780,13 +832,29 @@ get_fonts <- function() {
   font.add.google("Waiting for the Sunrise","ws")
 }
 
-# showtext.begin()
-# fm <- par('family')
-# par(family='am')
-# 
-# par(family=fm)
-# showtext.end()
 
+#' Transform to OpenStreetMap (*Google Mercator*) Projection
+#' 
+#' Transforms a \link[sp]{Spatial} object 
+#' to 'Google Mercator' projection - this makes the object work well with a
+#' backdrop.
+#' 
+#' @usage to_osm(spdf)
+#' spdf %>% to_osm
+#'
+#' @param spdf a \link[sp]{Spatial*} or \link[sp]{Spatial*DataFrame} object 
+#'
+#' @return \code{spdf} transformed to 'Google Mercator' projection
+#' @export
+#'
+#' @examples
+#' data(all_ireland) 
+#' # Transform to osm projection,  enjoy nice rectangular image...
+#' all_ireland %>% to_osm %>% 
+#'   make_backdrop(type='nps') %>% plot_it(border='navyblue')
+to_osm <- function(spdf) {
+  spTransform(spdf,osm()) 
+}
 
 #' Make an OpenStreetMap, Stamen or other map backdrop
 #'

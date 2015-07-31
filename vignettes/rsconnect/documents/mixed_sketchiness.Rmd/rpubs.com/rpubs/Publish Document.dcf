@@ -1,0 +1,7 @@
+name: Publish Document
+account: rpubs
+server: rpubs.com
+bundleId:
+        https://api.rpubs.com/api/v1/document/97924/bcda55953c2d471d8166b097e747dbb6
+url: http://rpubs.com/NCG_Maynooth/97924
+when: 1438188085.87347

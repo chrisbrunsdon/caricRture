@@ -1,0 +1,11 @@
+base
+dplyr
+rgeos
+sysfonts
+showtext
+sp
+rJava
+raster
+rgdal
+OpenStreetMap
+caricRture

@@ -1,0 +1,111 @@
+---
+title: "Working with Backdrops and Sketchy Maps"
+author: "Chris Brunsdon"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Backdrops and Sketchy Maps}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+This vignette gives a demonstration of how `caricRture` functions may be used to produce graphics with a 'mixed' level of sketchiness.  There are two possibilities here
+
+1. Mixing *crisp* and *fuzzy* geographical information.
+2. Mixing geographical information with varying degrees of fuzziness.
+
+Here the terms crisp and fuzzy are used in the sense of fuzzy set theory, or in some applications fuzzy number theory.  In general,  the degree of fuzziness here will be visualised by using 'sketchiness' as a visual variable. In this vignette,  possibility 1 will be considered - possibility 2 will be addressed in a forthcoming vignette. Some new `caricRture` commands will be introduced,  but it is worth working through the introductory vignette prior to working through this one if you aren't very familiar with `caricRture` yet. 
+
+As is the case with all sessions involving `caricRture` the first task is to load the package.
+```{r,message=FALSE,warning=FALSE}
+library(caricRture)
+```
+
+
+## Crisp backdrops,  fuzzy overlays
+A very basic approach to mixing crisp information with fuzzy is to use [OpenStreetMap](https://www.openstreetmap.org/#map=5/51.500/-0.100) backdrops on which to sketch `caricRture`-processed
+ geographical entities. This can be done with the `make_backdrop` function,  which works similarly to `make_canvas` - the difference being that it obtains an image of on OpenStreetMap map covering the extent of the object fed as input,  and creates a canvas with this as a backdrop.   For this to work properly 
+ 
+ 1. The computer must be online (to access the backdrop).
+ 2. The geographical object fed to `make_backdrop` must have a defined `proj4string` - not `NA`.
+ 
+ Once these conditions are met,  this is quite a simple task:
+ 
+```{r,fig.width=5,fig.height=6,fig.align='center',cache=TRUE}
+data(RA)
+RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% 
+  make_backdrop %>% sketch_it(col='firebrick',lwd=2)
+```
+
+One of the parameters to `make_backdrop` is `type` - this can take a number of character string values - the default is `'osm'` meaning that the backdrop is an OpenStreetMap map.  Another possibility is `'osm-bw'` - a monochrome OpenStreetMap map.  This is quite useful for giving the impression of a basic map that has been written on.  Here the `clone_data` function is also introduced. This takes the `data.frame` part of a `SpatialPolygonsDataFrame` and attaches it to the input `SpatialPolygons` object,  providing the two have matched zone `ID`s.  The idea here is to avoid making multiple copies of data frames,  each stage of the polygon processing is applied just to `SpatialPolygons` and then the data is re-attached near to the end of the process. In this example the data frame is used to select out a single polygon representing the NUTS3 region named `'Midlands'`. 
+
+```{r,fig.width=5,fig.height=6,fig.align='center',cache=TRUE}
+data(RA)
+RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% 
+  make_backdrop(type='osm-bw') %>% clone_data(RA.spdf) %>% subset(NUTS3NAME == 'Midland') %>% 
+  sketch_it(col='firebrick',border='firebrick',rough=0.03)
+```
+
+Some of the options for the backdrop map type are listed below:
+
+-------------------------------------------------------------------------
+Abbreviation for `type`  Name                              Notes
+------------------------ --------------------------------- --------------
+osm                      OpenStreetMap                     Default
+
+osm-bw                   OpenStreetMap (monochrome)        B&W
+
+bing                     Bing Maps
+
+stamen-watercolor        Stamen 'watercolor' map           'Hand drawn'
+
+stamen-toner             Stamen 'toner' map                Stylised + B&W
+
+esri                     ESRI Map
+
+esri-topo                ESRI topological map
+
+apple-iphoto             Apple map as in iPhoto
+
+nps                      National Parks Service            Terrain 
+-------------------------------------------------------------------------
+
+The *stamen* maps are stylised maps,  so don't really fit into the 'crisp backdrop' category of this section,  but any of the others will work.
+The Bing maps are darker,  and work well with light-coloured sketching.
+
+```{r,fig.width=5,fig.height=6,fig.align='center',fig.keep='last',echo=-1}
+plot.new()
+RA.spdf %>% small_chop %>% generalise_it(10000) %>% tidy_it %>% 
+  dilate_it(3500) %>% tidy_it %>% curve_it(0.8) %>% make_backdrop(type='bing') %>% 
+  sketch_it(col='lightgreen',border=NA,rough=0.01) %>% plot_it(lwd=4,border='orange1',col=NA)
+```
+
+## Fuzzy backdrops and a few new tricks
+These can be created by using the above approach with map types such as `stamen-watercolor` and `stamen-toner`.  For example, the following uses 'stamen-toner' which is designed to work well with photocopiers. 
+
+```{r,fig.width=5,fig.height=6,fig.align='center',cache=TRUE}
+RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% 
+  make_backdrop(type='stamen-toner') %>% clone_data(RA.spdf) %>% subset(NUTS3NAME == 'West') %>% 
+  sketch_it(col='darkblue',border='darkblue',rough=0.03,lwd=2)
+```
+
+OK,  use of photocopiers these days is only slightly more frequent than the use of epidiascopes or magic lanterns,  but this does present a 'stylised' backdrop that could be used to indicate some kind of sketchiness.  Another approach is to use `stamen-watercolor` (note US spelling)  - this is a more obviously 'sketchy' style.
+
+```{r,fig.width=5,fig.height=6,fig.align='center',cache=TRUE}
+RA.spdf %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% 
+  make_backdrop(type='stamen-watercolor') %>% clone_data(RA.spdf) %>% 
+  subset(NUTS3NAME == 'Border') %>% sketch_it(lwd=2)
+```
+
+Note that the map backdrops have an 'ultrasound scan' look to them,  due to a slight curvature.  This is because all of the examples have used the Irish Transverse Mercator projection - [epsg:2157](http://spatialreference.org/ref/epsg/2157/) - while the OpenStreetMap tiles are based on the Google Mercator projection [epsg:7094](http://spatialreference.org/ref/sr-org/7094/proj4/).  `make_backdrop` re-projects the tiles on the fly,  but in so doing 'warps' the rectangular shape.  Transforming the overlaid objects to Google Mercator overcomes this problem,  and can easily be done using the `to_osm` function:
+
+```{r,fig.width=5,fig.height=6,fig.align='center',cache=TRUE}
+# Here we adopt the 'felt tip scrawl' look -
+# but in a nice rectangular backdrop...
+'navyblue' %>% adjustcolor(alpha.f=0.4) -> bluefelt
+'black' %>% adjustcolor(alpha.f=0.4) -> blackfelt
+RA.spdf %>% to_osm %>% small_chop %>% generalise_it(11000) %>% tidy_it %>% 
+  make_backdrop(type='nps') %>% clone_data(RA.spdf) %>% 
+  subset(NUTS3NAME == 'Mid-East') %>% sketch_it(lwd=5,col=bluefelt,border=blackfelt)
+```
