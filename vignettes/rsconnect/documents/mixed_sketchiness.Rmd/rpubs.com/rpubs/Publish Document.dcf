@@ -2,6 +2,6 @@ name: Publish Document
 account: rpubs
 server: rpubs.com
 bundleId:
-        https://api.rpubs.com/api/v1/document/97924/bcda55953c2d471d8166b097e747dbb6
-url: http://rpubs.com/NCG_Maynooth/97924
-when: 1438188085.87347
+        https://api.rpubs.com/api/v1/document/98154/0ffe1615ce7047b4a5d6239e48acbe57
+url: http://rpubs.com/NCG_Maynooth/98154
+when: 1438340435.2926
