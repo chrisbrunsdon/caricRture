@@ -11,9 +11,11 @@ Depends:
     rgeos,
     showtext,
     sp,
-    OpenStreetMap
+    OpenStreetMap,
+    GISTools
 License: GPL-3
 LazyData: true
 Suggests:
     knitr
 VignetteBuilder: knitr
+RoxygenNote: 5.0.0

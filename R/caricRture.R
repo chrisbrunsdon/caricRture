@@ -109,7 +109,6 @@ get.IDs <- function(x) sapply(x@polygons, function(y) y@ID)
 #'
 #' @return a \link[sp]{SpatialPolygonsDataFrame}  object with polygons from \code{sp} and data from \code{spdf}.
 #' @export
-#'
 #' @examples
 #' data(RA)
 #' RA.spdf %>% small_chop -> RA.sp
@@ -117,6 +116,36 @@ get.IDs <- function(x) sapply(x@polygons, function(y) y@ID)
 #' RA.sp %>% clone_data(RA.spdf) -> RA.sp2
 #' RA.sp2 %>% data.frame %>% head
 clone_data <- function(sp,spdf) SpatialPolygonsDataFrame(sp,data.frame(spdf))
+
+#' Fuse data from to \link[sp]{Spatial} object
+#' 
+#' Populate a transformed \link[sp]{SpatialPolygons} object with data from a 
+#' matrix or array with a set of names or rownames matching the \link[sp]{SpatialPolygons} object IDs
+#'
+#' @usage fuse_data(sp,v)
+#' sp \%>\% fuse_data(v)
+#'
+#' @param sp a \link[sp]{SpatialPolygons} object
+#' @param v a variables whose names or rownames match thev IDs for \code{sp}
+#'
+#' @return a \link[sp]{SpatialPolygonsDataFrame}  object with polygons from \code{sp} and data from \code{v}.
+#' @export
+#' @examples
+#' data(RA)
+#' RA.spdf %>% small_chop -> RA.sp
+#' class(RA.sp)
+#' RA.sp %>% clone_data(RA.spdf) -> RA.sp2
+#' RA.sp2 %>% data.frame %>% head
+fuse_data <- function(sp,v) {
+  if (is.data.frame(v))  return(SpatialPolygonsDataFrame(sp,v))
+  if (is.matrix(v)) return(SpatialPolygonsDataFrame(sp,data.frame(v)))
+  v2 <- data.frame(v)
+  colnames(v2) <- deparse(substitute(v))
+  return(SpatialPolygonsDataFrame(sp,v2))
+}
+
+
+
 
 
 .Hstroke <- function(x1,y1,x2,y2,rough,lmin=0,anchor=FALSE,...) {
@@ -339,7 +368,6 @@ Hscribble <- function(x,y,rough=0.05,lmin=0,overdraw=TRUE,border='black',col=NA,
 #'
 #' @return No value returned
 #' @export
-#'
 #' @examples
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
 #' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
@@ -382,8 +410,6 @@ Htitle <- function(...)
 #'
 #' @return No value returned
 #' @export
-#' 
-#' 
 #' @examples
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
 #' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
@@ -448,7 +474,6 @@ Hcompass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), ov
 #'
 #' @return a \link[sp]{SpatialPolygons}  object with internal holes removed (IDs are the same as \code{spdf})
 #' @export
-#'
 #' @examples
 #' data(RA)
 #' RA.spdf %>% hole_chop %>% plot
@@ -480,7 +505,6 @@ ismax <- function(x) x == max(x)
 #'
 #' @return a \link[sp]{SpatialPolygons}  object with satellite polygons removed (IDs are the same as \code{spdf})
 #' @export
-#'
 #' @examples
 #' data(RA)
 #' RA.spdf %>% small_chop %>% plot
@@ -516,7 +540,6 @@ small_chop <- function(x,thresh) {
 #'
 #' @return the input \code{spdf} - useful for pipelines
 #' @export
-#'
 #' @examples
 #' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
 #' # Create a blank canvas with extent containing p1
@@ -526,7 +549,7 @@ sketch_it <- function(x,rough=0.05,lmin=0,...) {
   if (all(sapply(params,length) == 1)) return(do.call(sketch_it_all,append(list(x=x),params)))
   for (i in 1:length(x)) {
     these_params <- lapply(params,elt,i)
-    do.call(sketch_it_all,append(list(x=x[i]),these_params))
+    do.call(sketch_it_all,append(list(x=x[i,]),these_params))
   }
   x  %>% invisible
 }
@@ -568,7 +591,6 @@ sketch_it_old <- function(x,rough=0.05,lmin=0,...) {
 #'
 #' @return a \link[sp]{SpatialPolygons} curved caricature 
 #' @export
-#'
 #' @examples 
 #' 'indianred' %>% adjustcolor(alpha.f=0.3) -> ired
 #' "POLYGON((0 0,0 2,1 3.5,3 3,4 1,3 0,0 0))" %>% readWKT -> p1
@@ -594,7 +616,6 @@ curve_it <- function(x,s) {
 #'
 #' @return A \link[sp]{SpatialPolygons} outline of the input object
 #' @export
-#'
 #' @examples
 #' data(RA)
 #' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% outline_it %>% make_canvas %>% plot_it
@@ -616,7 +637,6 @@ outline_it <- function(spdf) {
 #'
 #' @return as \code{spdf}
 #' @export
-#'
 #' @examples
 #' data(all_ireland)
 #' all_ireland %>% make_canvas %>% plot_it
@@ -637,7 +657,6 @@ plot_it <- function(spdf,...) {
 #'
 #' @return Echos \code{spdf} - this is useful for pipelines using \code{\%>\%} 
 #' @export
-#'
 #' @examples
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
 #' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
@@ -662,7 +681,6 @@ make_canvas <- function(spdf) {
 #'
 #' @return A generalised \link[sp]{SpatialPolygons} object
 #' @export
-#'
 #' @examples
 #' data(RA)
 #' RA.spdf %>% small_chop %>% generalise_it(10000) %>% plot
@@ -681,7 +699,6 @@ generalise_it <- function(spdf,tol) {
 #'
 #' @return a \link[sp]{SpatialPolygons} object with convex hulls of polygons (may overlap)
 #' @export
-#'
 #' @examples
 #' "MULTIPOLYGON (((30 20, 45 40, 35 35, 25 35, 10 40, 30 20)),
 #'    ((15 5, 40 8, 40 10, 35 8, 10 20, 5 10, 15 5)))" %>% readWKT -> p1
@@ -703,7 +720,6 @@ hull_it <- function(x) {
 #'
 #' @return a \link[sp]{SpatialPolygons} object with overlaps cut out
 #' @export
-#'
 #' @examples
 #' # Create an object with two overlapping polygons
 #' "MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)))" %>% readWKT(id="George") -> george
@@ -762,7 +778,6 @@ tidy_it <- function(x) {
 #'
 #' @return A \link[sp]{SpatialPolygons} object with the dilation applied
 #' @export 
-#'
 #' @examples
 #' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
 #' dsg <- adjustcolor('darkseagreen',alpha.f=0.5)
@@ -782,7 +797,6 @@ dilate_it <- function(spdf,r) {
 #'
 #' @return A \link[sp]{SpatialPolygons} object with contraction applied
 #' @export
-#'
 #' @examples
 #' "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))" %>% readWKT -> p1
 #' dv <- adjustcolor('darkviolet',alpha.f=0.5)
@@ -819,7 +833,6 @@ contract_it <- function(spdf,r) {
 #'
 #' @return Nothing is returned
 #' @export
-#'
 #' @examples
 #' get_fonts() # Thats basically it - once run,  fonts will be installed
 get_fonts <- function() {
@@ -846,7 +859,6 @@ get_fonts <- function() {
 #'
 #' @return \code{spdf} transformed to 'Google Mercator' projection
 #' @export
-#'
 #' @examples
 #' data(all_ireland) 
 #' # Transform to osm projection,  enjoy nice rectangular image...
@@ -862,10 +874,12 @@ to_osm <- function(spdf) {
 #' can be from OpenStreetMap, Google, Stamen, ESRI, bing, Apple or other sources
 #' depending on location. 
 #'
-#' @usage make_backdrop(spdf,...)
-#' spdf %>% make_backdrop(...)
+#' @usage make_backdrop(spdf,bw,sepia,...)
+#' spdf %>% make_backdrop(bw,sepia,...)
 #'
 #' @param spdf a \link[sp]{SpatialPolygons} or \link[sp]{SpatialPolygonsDataFrame} object
+#' @param bw A variable indicating whether to create a monochrome backdrop - 0 indicates use colour, 1 is standard brightness, other values vary brightness
+#' @param sepia  A variable indicating whether to create a sepia backdrop - 0 indicates use colour, 1 is standard brightness, other values vary brightness - this overwrites \code{bw}
 #' @param ...  parameters passed on to \link[OpenStreetMap]{openmap} 
 #' 
 #' @details This function requires that \code{spdf} has a well-defined \code{proj4string} in
@@ -873,23 +887,122 @@ to_osm <- function(spdf) {
 #' 
 #' @return Echos \code{spdf} - this is useful for pipelines using \code{\%>\%} 
 #' @export
-#'
 #' @examples
 #' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
 #' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
 #' # backdrop of type osm-bw (monochrome OpenStreetMap)
 #' data(RA) 
 #' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% 
-#'   make_backdrop(type='osm-bw') %>% sketch_it(col='darkred',lwd=2,rough=0.08)
-make_backdrop <- function(spdf,...) {
+#'   make_backdrop(type='osm',sepia=0.8) %>% sketch_it(col='darkred',lwd=2,rough=0.08)
+make_backdrop <- function(spdf,bw=0,sepia=0,...) {
   spdf %>% spTransform('+init=epsg:4326') %>% slot('bbox') -> bx
   ul <- c(bx[2,2],bx[1,1])
   lr <- c(bx[2,1],bx[1,2])
   mp <- openmap(ul,lr,...)
+  all_tiles <- mp$tiles
+  if (bw != 0) {
+    TC <- 1
+    for (a_tile in all_tiles) {
+      a_tile$colorData %>% col2rgb %>% divide_by(256) -> ctabl
+      c(0.2125,0.7154,0.0721) %*% ctabl %>% multiply_by(bw) %>% pmin(1) %>% grey -> gv
+      mp$tiles[[TC]]$colorData <- gv
+      TC <- TC + 1
+    }
+  }
+  if (sepia != 0) {
+    m2rgb <- function(m) rgb(m[1,],m[2,],m[3,])
+    TC <- 1
+    for (a_tile in all_tiles) {
+      a_tile$colorData %>% col2rgb %>% divide_by(256) -> ctabl
+      c(0.2125,0.7154,0.0721) %*% ctabl -> ctabl
+      c(1.3510,1.2030,0.9370) %*% ctabl %>% multiply_by(sepia) %>% pmin(1) %>% m2rgb -> gv 
+      mp$tiles[[TC]]$colorData <- gv
+      TC <- TC + 1
+    }
+  }
   tmp <- openproj(mp,proj4string(spdf))
   plot(tmp)
   spdf %>% invisible
 }
+
+#' Draw a sketchy choropleth map
+#'
+#' @param sp A  \link[sp]{SpatialPolygonsDataFrame} object
+#' @param v A variable (or expression) to control the colouring of the map
+#' @param shading A shading scheme - see \link[GISTools]{auto.shading}
+#' @param ... other parameters passed to \link[GISTools]{choropleth}
+#'
+#' @return The input \code{sp} - useful for pipelining
+#' @export
+#' @examples
+#' x <- 7
+#' 
+choro_sketch_it <- function (sp, v, shading = auto.shading, ...) 
+{
+  try(v <- eval(substitute(v),envir=sp@data),silent=TRUE)
+  if (is.function(shading)) {
+    sh <- shading(v)
+  } else {
+    sh <- shading
+  }
+  i = sh$cols[1 + findInterval(v, sh$breaks)]
+  sketch_it(sp, col = i, ...)
+  invisible(sh)
+}
+
+
+legend_shapes <- function(tlx,tly,side,n,drop) {
+  square <- function(x0,y0,l) {
+    pl <- cbind(c(x0,x0,x0+l,x0+l,x0),c(y0,y0+l,y0+l,y0,y0))
+    Polygon(pl) }
+  pols <- vector('list',n)
+  for (i in 1:n) pols[[i]] <- Polygons(list(square(tlx,tly-drop*(i-1),side)),ID=i)
+  SpatialPolygons(pols)
+}
+
+#' Sketchy legend with 'handwritten' font
+#' 
+#' Similar to the \link[graphics]{legend} command,  
+#' but chooses a hand writing styled font,  and draws sketchy legend
+#' symbols
+#' 
+#' @usage hand_legend <- function(labels,tlx,tly,side,gap,cex=1,fontfam='am',...)
+#' labels \%>\% hand_legend(...)
+#'
+#' @param labels a character string array of legends labels
+#' @param tlx top left x coordinate of legend
+#' @param tly top left y coordinate of legend
+#' @param fontfam Handwritten font family - see \link{get_fonts}
+#' @param side length of size of square in legend
+#' @param gap gap between bottom of one legend and top of next
+#' @param cex scale of legend text 
+#' @param ... other parameters passed on to the \link{sketch_it} function
+#' 
+#'
+#' @return No value returned
+#' @export
+#' @examples
+#' # Here make_canvas is inserted in a pipeline after a simplified and tidied 
+#' # map of Irish NUTS3 regions is created.  A sketchy rendition is then added to the
+#' # canvas.
+#' get_fonts()
+#' data(RA) 
+#' RA.spdf %>% small_chop %>% gSimplify(tol=11000) %>% tidy_it %>% clone_data(RA.spdf) -> RA.spdf2
+#' shadecol <- ifelse(RA.spdf2$NUTS2 == 'IE01','indianred','dodgerblue')
+#' 
+#' RA.spdf2 %>% make_canvas %>% sketch_it(col=shadecol)
+#' c('NUTS2 I','NUTS2 II') %>% hand_legend(-22450,427691,45000,15000,col=c('indianred','dodgerblue'),cex=1.8)
+#' 
+hand_legend <- function(labels,tlx,tly,side,gap,cex=1,fontfam='am',...) {
+  drop <- side + gap
+  n <- length(labels)
+  lshp <- legend_shapes(tlx,tly,side,n,drop)
+  lshp %>% sketch_it(...)
+  y_locs <- tly + side/2 - (0:(n-1))*drop
+  x_locs <- tlx + side*1.1 
+  for (i in 1:n) hand_text(labels[i],x_locs,y_locs[i],cex=cex, pos=4, fontfam=fontfam)
+}
+
 
 # # Some demo stuff
 # # 
