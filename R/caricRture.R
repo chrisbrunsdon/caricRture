@@ -27,6 +27,36 @@
 #'
 NULL
 
+#' Baltic Soil Survey 
+#' 
+#' A pair of spatial data objects relating to the 2000 Baltic Soil Survey.
+#' @format The data contains two objects:
+#' 
+#' \describe{
+#'  \item{baltic_chop}{A \link[sp]{SpatialPolygons} object of states surrounding the Baltic. Russia is truncated.}
+#'  \item{topsoil}{A \link[sp]{SpatialPointsDataFrame} containing survey results for topsoil.}
+#' }
+#' 
+#' The \code{topsoil} data frame contains the following variables;
+#' 
+#' \describe{
+#'  \item{SIO2_T}{Silica (Silicon dioxide) concentration.}
+#'  \item{TiO2_T}{Titanium dioxide concentration.}
+#'  \item{Al2O3_T}{Aluminium oxide concentration.}
+#'  \item{Fe2O3_T}{Iron (III) oxide concentration.}
+#'  \item{MnO_T}{Manganese (II) oxide concentration.}
+#'  \item{MgO_T}{Magnesium oxide concentration.}
+#'  \item{CaO_T}{Calcium oxide concentration.}
+#'  \item{Na2O_T}{Sodium oxide concentration.}
+#'  \item{K2O_T}{Potassium oxide concentration.}
+#'  \item{P2O5_T}{Phosphorus pentoxide concentration.}
+#' }
+#' 
+#' @details Concentrations are percentage by weight, standardised to \eqn{z}-scores. All map projections are UTM zone 35N.
+#' @source BSS Project in Northern Europe
+#' @references Reimann C, Siewers U, Tarvainen T, Bityukova L, Eriksson J, Gilucis A, Gregorauskiene V, Lukashev VK, Matinian NN, Pasieczna A. Agricultural Soils in Northern Europe: A Geochemical Atlas. Geologisches Jahrbuch, Sonderhefte, Reihe D, Heft SD 5, Schweizerbartsche Verlagsbuchhandlung, Stuttgart, 2003.
+#' @name bss
+NULL
 
 #' Generalised NUTS3 regions for Ireland
 #' 
