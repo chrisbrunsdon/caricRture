@@ -472,8 +472,7 @@ Hpdf <- function(...) pdf(...,family='Amatic')
 #' Sketchy compass with 'handwritten' font
 #' 
 #' Adds a compass (very crude) to a hand drawn map.
-#' 
-#' @usage hand_compass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), overdraw=FALSE, ...) 
+#' @usage hand_compass <- function (x, y, r, rot = 0, cex = 1, north_name =  "N", fontfam='am', overdraw=FALSE, ...) 
 #' x \%>\% hand_compass(...)
 #'
 #' @param x x-coordinate for compass centre
@@ -481,7 +480,7 @@ Hpdf <- function(...) pdf(...,family='Amatic')
 #' @param r compass 'radius' in map units
 #' @param rot compass rotation 
 #' @param cex compass scale 
-#' @param names Names for the four compass directions
+#' @param north_name Name for north to write on the compass
 #' @param overdraw whether to use overdraw when drawing compass lines
 #' @param fontfam Handwritten font family - see \link{get_fonts}
 #' @param ... other parameters passed on to the \link{sketch_it} function
@@ -498,25 +497,31 @@ Hpdf <- function(...) pdf(...,family='Amatic')
 #' shadecol <- ifelse(RA.spdf2$NUTS2 == 'IE01','indianred','dodgerblue')
 #' 
 #' RA.spdf2 %>% make_canvas %>% sketch_it(col=shadecol)
-#' c('NUTS2 I','NUTS2 II') %>% hand_legend(-22450,427691,45000,15000,col=c('indianred','dodgerblue'),cex=1.8)
+#' # Add a north arrow with 'North' written in Irish
+#' hand_compass(353685,424980,30000,fontfam = 'pm',north_name="ó thuaidh")
 #' 
-hand_compass <- function (x, y, r, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), overdraw=FALSE, ...) 
+hand_compass <- function (x, y, r, rot = 0, cex = 1, north_name =  "N", fontfam='am', overdraw=FALSE, rough=0.01, ...) 
 {
   oldcex <- par(cex = cex)
   mheight <- strheight("M")
   xylim <- par("usr")
   plotdim <- par("pin")
   xmult <- (xylim[2] - xylim[1])/(xylim[4] - xylim[3]) * plotdim[2]/plotdim[1]
-  point.angles <- seq(0, 2 * pi, l = 5) + pi * rot/180
+  point.angles <- seq(0, 2 * pi, l = 5)[1:4] + pi * rot/180
   crspans <- rep(c(mheight * 3, mheight/6), length.out = 5)
-  xpoints <- cos(point.angles) * r + x
-  ypoints <- sin(point.angles) * r + y
-  for (point in 1:4) {
-    Hstroke(c(xpoints[point], x), c(ypoints[point], y),overdraw=overdraw,...)
-  }
-  txtxpoints <- cos(point.angles) * 1.3 * crspans[1] * r + x
-  txtypoints <- sin(point.angles) * 1.3 * crspans[1] * r + y
-  hand_text(names,xpoints[1:4], ypoints[1:4])
+  atten <- c(0.2,1,0.2,0.2)
+  xpoints <- cos(point.angles) * r * atten + x
+  ypoints <- sin(point.angles) * r * atten + y
+  Hstroke(xpoints[c(1,3)], ypoints[c(1,3)],overdraw=overdraw,rough=rough,...)
+  Hstroke(xpoints[c(2,4)], ypoints[c(2,4)],overdraw=overdraw,rough=rough,...)
+  txtxpoints <- cos(point.angles) * 1.3 * crspans[1] * r * atten + x
+  txtypoints <- sin(point.angles) * 1.3 * crspans[1] * r * atten + y
+  x_shift <- (xpoints[2] - x)*0.2
+  y_shift <- (ypoints[2] - y)*0.2
+  x_arrow <- xpoints[2] - x_shift * c(1,0,1) + y_shift * c(1,0,-1) * 0.5
+  y_arrow <- ypoints[2] - y_shift * c(1,0,1) + x_shift * c(1,0,-1) * 0.5
+  Hpath(x_arrow,y_arrow,overdraw=overdraw,rough=rough,...)
+  hand_text(north_name,xpoints[2]+x_shift, ypoints[2]+y_shift,fontfam=fontfam)
   par(oldcex)
 }
 

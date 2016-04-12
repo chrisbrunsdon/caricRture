@@ -4,7 +4,7 @@
 \alias{hand_compass}
 \title{Sketchy compass with 'handwritten' font}
 \usage{
-hand_compass <- function (x, y, rot = 0, cex = 1, names =  c("E", "N", "W", "S"), overdraw=FALSE, ...) 
+hand_compass <- function (x, y, r, rot = 0, cex = 1, north_name =  "N", fontfam='am', overdraw=FALSE, ...) 
 x \%>\% hand_compass(...)
 }
 \arguments{
@@ -18,13 +18,13 @@ x \%>\% hand_compass(...)
 
 \item{cex}{compass scale}
 
-\item{names}{Names for the four compass directions}
+\item{north_name}{Name for north to write on the compass}
+
+\item{fontfam}{Handwritten font family - see \link{get_fonts}}
 
 \item{overdraw}{whether to use overdraw when drawing compass lines}
 
 \item{...}{other parameters passed on to the \link{sketch_it} function}
-
-\item{fontfam}{Handwritten font family - see \link{get_fonts}}
 }
 \value{
 No value returned
@@ -42,7 +42,8 @@ RA.spdf \%>\% small_chop \%>\% gSimplify(tol=11000) \%>\% tidy_it \%>\% clone_da
 shadecol <- ifelse(RA.spdf2$NUTS2 == 'IE01','indianred','dodgerblue')
 
 RA.spdf2 \%>\% make_canvas \%>\% sketch_it(col=shadecol)
-c('NUTS2 I','NUTS2 II') \%>\% hand_legend(-22450,427691,45000,15000,col=c('indianred','dodgerblue'),cex=1.8)
+# Add a north arrow with 'North' written in Irish
+hand_compass(353685,424980,30000,fontfam = 'pm',north_name="ó thuaidh")
 
 }
 
